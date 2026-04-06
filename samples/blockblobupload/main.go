@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 
@@ -91,11 +92,16 @@ func main() {
 		log.Fatal().Msg(err.Error())
 	}
 
-	chunkSize := 4 << 20                                                                // 4MB
-	totalNumberOfChunks := uint16((fileSize + int64(chunkSize) - 1) / int64(chunkSize)) // round up
-	if totalNumberOfChunks == 0 {
-		totalNumberOfChunks++
+	var chunkSize int64 = 4 << 20                    // 4MB
+	chunks := (fileSize + chunkSize - 1) / chunkSize // ceil it
+	if chunks > math.MaxUint16 {
+		log.Fatal().Msgf("too many chunks: %d (max %d)", chunks, math.MaxUint16)
 	}
+	if chunks == 0 {
+		chunks++
+	}
+
+	totalNumberOfChunks := uint16(chunks)
 
 	ctx := context.Background()
 
